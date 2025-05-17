@@ -15,7 +15,12 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
     private int score, level;
     private boolean gameRunning = false;
     private boolean gamePaused = false;
+
     private Clip bounceSound;
+    private Clip bonusSound;
+    private Clip spikeSound;
+    private Clip obstacleSound;
+
     private Rectangle bonus;
     private Rectangle spike;
     private ArrayList<Rectangle> obstacles = new ArrayList<>();
@@ -33,11 +38,27 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
 
     private void loadAssets() {
         try {
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource("/bounce.wav"));
-            bounceSound = AudioSystem.getClip();
-            bounceSound.open(audioIn);
+            bounceSound = loadClip("/bounce.wav");
+            bonusSound = loadClip("/bonus.wav");
+            spikeSound = loadClip("/spike.wav");
+            obstacleSound = loadClip("/obstacle.wav");
         } catch (Exception e) {
             System.out.println("Error loading sound: " + e.getMessage());
+        }
+    }
+
+    private Clip loadClip(String resourcePath) throws Exception {
+        AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource(resourcePath));
+        Clip clip = AudioSystem.getClip();
+        clip.open(audioIn);
+        return clip;
+    }
+
+    private void playClip(Clip clip) {
+        if (clip != null) {
+            if (clip.isRunning()) clip.stop();
+            clip.setFramePosition(0);
+            clip.start();
         }
     }
 
@@ -130,7 +151,7 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.setColor(new Color(50, 150, 50));
+        g.setColor(new Color(80, 180, 80));
         g.fillRect(0, 0, getWidth(), getHeight());
 
         g.setColor(Color.RED);
@@ -140,9 +161,7 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
         g.fillRect(paddleX, paddleY, paddleWidth, paddleHeight);
 
         if (bonus != null) {
-            Color[] bonusColors = {
-                    Color.BLUE, Color.MAGENTA, Color.ORANGE, Color.CYAN, Color.PINK
-            };
+            Color[] bonusColors = { Color.BLUE, Color.MAGENTA, Color.ORANGE, Color.CYAN, Color.PINK };
             int index = (score / 10) % bonusColors.length;
             g.setColor(bonusColors[index]);
             g.fillRect(bonus.x, bonus.y, bonus.width, bonus.height);
@@ -197,39 +216,38 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
 
         if (ballX <= 0 || ballX + ballSize >= getWidth()) {
             ballDX *= -1;
-            playSound();
+            playClip(bounceSound);
         }
         if (ballY <= 0) {
             ballDY *= -1;
-            playSound();
+            playClip(bounceSound);
         }
 
         if (ballY + ballSize >= paddleY && ballX + ballSize >= paddleX && ballX <= paddleX + paddleWidth) {
             ballDY *= -1;
-            score++;
-            playSound();
-            if (score % 5 == 0) {
-                level++;
-                ballDX += (ballDX > 0) ? 1 : -1;
-                ballDY += (ballDY > 0) ? 1 : -1;
-            }
+            playClip(bounceSound);
         }
 
         Rectangle ballRect = new Rectangle(ballX, ballY, ballSize, ballSize);
         for (Rectangle obs : obstacles) {
             if (ballRect.intersects(obs)) {
                 ballDY *= -1;
-                playSound();
+                playClip(obstacleSound);
                 break;
             }
         }
 
         if (bonus != null && ballRect.intersects(bonus)) {
             score += 5;
+            if (score % 10 == 0) {
+                level++;
+            }
+            playClip(bonusSound);
             spawnBonus();
         }
 
         if (spike != null && ballRect.intersects(spike)) {
+            playClip(spikeSound);
             gameRunning = false;
             timer.stop();
             obstacleTimer.stop();
@@ -244,14 +262,8 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
         repaint();
     }
 
-    private void playSound() {
-        if (bounceSound != null) {
-            bounceSound.setFramePosition(0);
-            bounceSound.start();
-        }
-    }
-
-    @Override public void keyPressed(KeyEvent e) {
+    @Override
+    public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
 
         if (key == KeyEvent.VK_ENTER) {
