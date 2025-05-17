@@ -51,7 +51,7 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
         Rectangle newBonus;
         do {
             int x = random.nextInt(width - 20);
-            int y = random.nextInt((height - 100) / 2) + 50; // upper half
+            int y = random.nextInt((height - 100) / 2) + 50;
             newBonus = new Rectangle(x, y, 20, 20);
         } while (intersectsWithObstacles(newBonus) || (spike != null && newBonus.intersects(spike)));
         bonus = newBonus;
@@ -65,11 +65,12 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
             return;
         }
         Rectangle newSpike;
+        Rectangle ballStartZone = new Rectangle(100 - 30, 100 - 30, ballSize + 60, ballSize + 60);
         do {
             int x = random.nextInt(width - 20);
-            int y = random.nextInt((height - 100) / 2) + 50; // upper half
+            int y = random.nextInt((height - 100) / 2) + 50;
             newSpike = new Rectangle(x, y, 20, 20);
-        } while (newSpike.intersects(new Rectangle(ballX, ballY, ballSize, ballSize))
+        } while (newSpike.intersects(ballStartZone)
                 || (bonus != null && newSpike.intersects(bonus))
                 || intersectsWithObstacles(newSpike));
         spike = newSpike;
@@ -129,25 +130,24 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        // Background color darker green
         g.setColor(new Color(50, 150, 50));
         g.fillRect(0, 0, getWidth(), getHeight());
 
-        // Ball
         g.setColor(Color.RED);
         g.fillOval(ballX, ballY, ballSize, ballSize);
 
-        // Paddle
         g.setColor(Color.BLUE);
         g.fillRect(paddleX, paddleY, paddleWidth, paddleHeight);
 
-        // Bonus (same color as paddle or blue if score >= 20)
         if (bonus != null) {
-            g.setColor(Color.BLUE);
+            Color[] bonusColors = {
+                    Color.BLUE, Color.MAGENTA, Color.ORANGE, Color.CYAN, Color.PINK
+            };
+            int index = (score / 10) % bonusColors.length;
+            g.setColor(bonusColors[index]);
             g.fillRect(bonus.x, bonus.y, bonus.width, bonus.height);
         }
 
-        // Spike with danger sign
         if (spike != null) {
             g.setColor(Color.BLACK);
             g.fillRect(spike.x, spike.y, spike.width, spike.height);
@@ -165,7 +165,6 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
             g.drawString(dangerMark, spike.x + spike.width / 2 - textWidth / 2, spike.y + spike.height - 12);
         }
 
-        // Obstacles dark black
         g.setColor(Color.BLACK);
         for (Rectangle obs : obstacles) {
             g.fillRect(obs.x, obs.y, obs.width, obs.height);
@@ -226,7 +225,7 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
         }
 
         if (bonus != null && ballRect.intersects(bonus)) {
-            score += 3;
+            score += 5;
             spawnBonus();
         }
 
@@ -260,7 +259,7 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
                 resetGame();
                 gameRunning = true;
             }
-        } else if (key == KeyEvent.VK_P && gameRunning) {
+        } else if ((key == KeyEvent.VK_P || key == KeyEvent.VK_SPACE) && gameRunning) {
             gamePaused = !gamePaused;
         }
 
