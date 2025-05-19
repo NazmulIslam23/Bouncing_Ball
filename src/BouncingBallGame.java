@@ -82,15 +82,15 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
         int width = getWidth();
         int height = getHeight();
         if (width <= 20 || height <= 20) {
-            spike = new Rectangle(0, 0, 20, 20);
+            spike = new Rectangle(0, 0, 10, 10);
             return;
         }
         Rectangle newSpike;
-        Rectangle ballStartZone = new Rectangle(100 - 30, 100 - 30, ballSize + 60, ballSize + 60);
+        Rectangle ballStartZone = new Rectangle(ballX - 10, ballY - 10, ballSize + 20, ballSize + 20);
         do {
             int x = random.nextInt(width - 20);
             int y = random.nextInt((height - 100) / 2) + 50;
-            newSpike = new Rectangle(x, y, 20, 20);
+            newSpike = new Rectangle(x, y, 10, 10);
         } while (newSpike.intersects(ballStartZone)
                 || (bonus != null && newSpike.intersects(bonus))
                 || intersectsWithObstacles(newSpike));
@@ -171,17 +171,21 @@ public class BouncingBallGame extends JPanel implements ActionListener, KeyListe
             g.setColor(Color.BLACK);
             g.fillRect(spike.x, spike.y, spike.width, spike.height);
 
-            int[] xPoints = { spike.x + spike.width / 2, spike.x + 5, spike.x + spike.width - 5 };
-            int[] yPoints = { spike.y + 5, spike.y + spike.height - 5, spike.y + spike.height - 5 };
+            int[] xPoints = { spike.x + spike.width / 2, spike.x + 2, spike.x + spike.width - 2 };
+            int[] yPoints = { spike.y + 2, spike.y + spike.height - 2, spike.y + spike.height - 2 };
             g.setColor(Color.RED);
             g.fillPolygon(xPoints, yPoints, 3);
 
             g.setColor(Color.WHITE);
-            g.setFont(new Font("Arial", Font.BOLD, 14));
+            g.setFont(new Font("Arial", Font.BOLD, 12));
             FontMetrics fm = g.getFontMetrics();
             String dangerMark = "!";
             int textWidth = fm.stringWidth(dangerMark);
-            g.drawString(dangerMark, spike.x + spike.width / 2 - textWidth / 2, spike.y + spike.height - 12);
+            g.drawString(
+                    dangerMark,
+                    spike.x + spike.width / 2 - textWidth / 2,
+                    spike.y + spike.height - 4
+            );
         }
 
         g.setColor(Color.BLACK);
